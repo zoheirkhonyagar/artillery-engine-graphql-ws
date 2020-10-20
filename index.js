@@ -7,21 +7,17 @@
 const async = require('async');
 const _ = require('lodash');
 const WebSocket = require('ws');
-const debug = require('debug')('engine:ws');
-const engineUtil = require('artillery/core/lib/engine_util');
+const debug = require('debug')('ws');
+const engineUtil = require('./engine_util');
 const template = engineUtil.template;
 
-function GraphQLEngine(script, ee, helpers) {
-  this.script = script;
-  this.ee = ee;
-  this.helpers = helpers;
-  console.log(script);
-  console.log(ee);
-  console.log(helpers);
-  return this;
+module.exports = WSEngine;
+
+function WSEngine(script) {
+  this.config = script.config;
 }
 
-GraphQLEngine.prototype.createScenario = function (scenarioSpec, ee) {
+WSEngine.prototype.createScenario = function (scenarioSpec, ee) {
   var self = this;
   let tasks = _.map(scenarioSpec.flow, function (rs) {
     if (rs.think) {
@@ -36,7 +32,7 @@ GraphQLEngine.prototype.createScenario = function (scenarioSpec, ee) {
   return self.compile(tasks, scenarioSpec.flow, ee);
 };
 
-GraphQLEngine.prototype.step = function (requestSpec, ee) {
+WSEngine.prototype.step = function (requestSpec, ee) {
   let self = this;
 
   if (requestSpec.loop) {
@@ -97,7 +93,7 @@ GraphQLEngine.prototype.step = function (requestSpec, ee) {
   return f;
 };
 
-GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
+WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
   let config = this.config;
 
   return function scenario(initialContext, callback) {
@@ -122,34 +118,18 @@ GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
       let ws = new WebSocket(config.target, subprotocols, options);
 
       ws.on('open', function () {
-        const message = {
-          type: 'connection_init',
-          payload: { portalId: 22, culture: 'de-CH' },
-        };
-        const result = ws.send(JSON.stringify(message), function (err) {
-          if (err) {
-            console.error(err);
-          }
-        });
         initialContext.ws = ws;
         return callback(null, initialContext);
       });
-      //  ws.on('message', function(msg) {
-      //    console.log('RECEIVED MSG!', msg)
-      //  })
+
       ws.once('error', function (err) {
         debug(err);
-        ee.emit('error', err.code);
+        ee.emit('error', err.message || err.code);
         return callback(err, {});
       });
     }
 
     initialContext._successCount = 0;
-    initialContext._pendingRequests = _.size(
-      _.reject(scenarioSpec, function (rs) {
-        return typeof rs.think === 'number';
-      })
-    );
 
     let steps = _.flatten([zero, tasks]);
 
@@ -166,5 +146,3 @@ GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
     });
   };
 };
-
-module.exports = GraphQLEngine;
