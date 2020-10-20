@@ -102,12 +102,24 @@ GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
 
   return function scenario(initialContext, callback) {
     function zero(callback) {
-      let tls = config.tls || {}; // TODO: config.tls is deprecated
+      let tls = config.tls || {};
       let options = _.extend(tls, config.ws);
+
+      let subprotocols = _.get(config, 'ws.subprotocols', []);
+      const headers = _.get(config, 'ws.headers', {});
+      const subprotocolHeader = _.find(headers, (value, headerName) => {
+        return headerName.toLowerCase() === 'sec-websocket-protocol';
+      });
+      if (typeof subprotocolHeader !== 'undefined') {
+        // NOTE: subprotocols defined via config.ws.subprotocols take precedence:
+        subprotocols = subprotocols.concat(
+          subprotocolHeader.split(',').map((s) => s.trim())
+        );
+      }
 
       ee.emit('started');
 
-      let ws = new WebSocket(config.target, 'graphql-ws');
+      let ws = new WebSocket(config.target, subprotocols, options);
 
       ws.on('open', function () {
         const message = {
@@ -127,7 +139,6 @@ GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
       //  })
       ws.once('error', function (err) {
         debug(err);
-        console.log(err);
         ee.emit('error', err.code);
         return callback(err, {});
       });
@@ -144,7 +155,6 @@ GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
 
     async.waterfall(steps, function scenarioWaterfallCb(err, context) {
       if (err) {
-        console.log(err);
         debug(err);
       }
 
