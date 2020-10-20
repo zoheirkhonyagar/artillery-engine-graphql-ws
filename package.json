@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/zoheirkhonyagar/artillery-engine-graphql/issues"
   },
-  "homepage": "https://github.com/zoheirkhonyagar/artillery-engine-graphql#readme"
+  "homepage": "https://github.com/zoheirkhonyagar/artillery-engine-graphql#readme",
+  "dependencies": {
+    "artillery": "^1.6.1"
+  }
 }
