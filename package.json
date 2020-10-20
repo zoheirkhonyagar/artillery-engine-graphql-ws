@@ -8,18 +8,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zoheirkhonyagar/artillery-engine-graphql.git"
+    "url": "git+https://github.com/zoheirkhonyagar/artillery-engine-graphql-ws.git"
   },
   "keywords": [
     "artillery",
     "graphql"
   ],
-  "author": "zoheir khonyagar <zoheirkhonyagar@gmail.com>",
+  "author": "Zoheir Khonyagar <zoheirkhonyagar@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zoheirkhonyagar/artillery-engine-graphql/issues"
+    "url": "https://github.com/zoheirkhonyagar/artillery-engine-graphql-ws/issues"
   },
-  "homepage": "https://github.com/zoheirkhonyagar/artillery-engine-graphql#readme",
+  "homepage": "https://github.com/zoheirkhonyagar/artillery-engine-graphql-ws#readme",
   "dependencies": {
     "artillery-core": "^4.8.1",
     "async": "^3.2.0",
