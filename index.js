@@ -8,7 +8,7 @@ const async = require('async');
 const _ = require('lodash');
 const WebSocket = require('ws');
 const debug = require('debug')('ws');
-const engineUtil = require('./engine_util');
+const engineUtil = require('artillery/core/lib/engine_util');
 const template = engineUtil.template;
 
 function GraphQLEngine(script) {
