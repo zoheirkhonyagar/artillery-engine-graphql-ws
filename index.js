@@ -33,8 +33,6 @@ GraphQLEngine.prototype.createScenario = function (scenarioSpec, ee) {
     return self.step(rs, ee);
   });
 
-  console.log(tasks);
-
   return self.compile(tasks, scenarioSpec.flow, ee);
 };
 
@@ -49,6 +47,9 @@ GraphQLEngine.prototype.step = function (requestSpec, ee) {
     return engineUtil.createLoopWithCount(requestSpec.count || -1, steps, {
       loopValue: requestSpec.loopValue || '$loopCount',
       overValues: requestSpec.over,
+      whileTrue: self.config.processor
+        ? self.config.processor[requestSpec.whileTrue]
+        : undefined,
     });
   }
 
@@ -59,18 +60,21 @@ GraphQLEngine.prototype.step = function (requestSpec, ee) {
     );
   }
 
-  let f = function (context, callback) {
-    ee.emit('request');
-    let startedAt = process.hrtime();
-
-    if (requestSpec.function) {
+  if (requestSpec.function) {
+    return function (context, callback) {
       let processFunc = self.config.processor[requestSpec.function];
       if (processFunc) {
         processFunc(context, ee, function () {
           return callback(null, context);
         });
       }
-    }
+    };
+  }
+
+  let f = function (context, callback) {
+    ee.emit('counter', 'engine.websocket.messages_sent', 1);
+    ee.emit('rate', 'engine.websocket.send_rate');
+    let startedAt = process.hrtime();
 
     let payload = template(requestSpec.send, context);
     if (typeof payload === 'object') {
@@ -78,18 +82,13 @@ GraphQLEngine.prototype.step = function (requestSpec, ee) {
     } else {
       payload = payload.toString();
     }
-    console.log('WS send: %s', payload);
+
     debug('WS send: %s', payload);
 
     context.ws.send(payload, function (err) {
       if (err) {
-        console.log(err);
         debug(err);
         ee.emit('error', err);
-      } else {
-        let endedAt = process.hrtime(startedAt);
-        let delta = endedAt[0] * 1e9 + endedAt[1];
-        ee.emit('response', delta, 0, context._uid);
       }
       return callback(err, context);
     });
