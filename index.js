@@ -11,13 +11,11 @@ const debug = require('debug')('ws');
 const engineUtil = require('./engine_util');
 const template = engineUtil.template;
 
-module.exports = WSEngine;
-
-function WSEngine(script) {
+function GraphQLEngine(script) {
   this.config = script.config;
 }
 
-WSEngine.prototype.createScenario = function (scenarioSpec, ee) {
+GraphQLEngine.prototype.createScenario = function (scenarioSpec, ee) {
   var self = this;
   let tasks = _.map(scenarioSpec.flow, function (rs) {
     if (rs.think) {
@@ -32,7 +30,7 @@ WSEngine.prototype.createScenario = function (scenarioSpec, ee) {
   return self.compile(tasks, scenarioSpec.flow, ee);
 };
 
-WSEngine.prototype.step = function (requestSpec, ee) {
+GraphQLEngine.prototype.step = function (requestSpec, ee) {
   let self = this;
 
   if (requestSpec.loop) {
@@ -93,12 +91,12 @@ WSEngine.prototype.step = function (requestSpec, ee) {
   return f;
 };
 
-WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
+GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
   let config = this.config;
 
   return function scenario(initialContext, callback) {
     function zero(callback) {
-      let tls = config.tls || {};
+      let tls = config.tls || {}; // TODO: config.tls is deprecated
       let options = _.extend(tls, config.ws);
 
       let subprotocols = _.get(config, 'ws.subprotocols', []);
@@ -115,21 +113,36 @@ WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
 
       ee.emit('started');
 
-      let ws = new WebSocket(config.target, subprotocols, options);
-
+      let ws = new WebSocket(config.target, 'graphql-ws');
       ws.on('open', function () {
+        const message = {
+          type: 'connection_init',
+          payload: { portalId: 22, culture: 'de-CH' },
+        };
+        const result = ws.send(JSON.stringify(message), function (err) {
+          if (err) {
+            console.error(err);
+          }
+        });
         initialContext.ws = ws;
         return callback(null, initialContext);
       });
-
+      //  ws.on('message', function(msg) {
+      //    console.log('RECEIVED MSG!', msg)
+      //  })
       ws.once('error', function (err) {
         debug(err);
-        ee.emit('error', err.message || err.code);
+        ee.emit('error', err.code);
         return callback(err, {});
       });
     }
 
     initialContext._successCount = 0;
+    initialContext._pendingRequests = _.size(
+      _.reject(scenarioSpec, function (rs) {
+        return typeof rs.think === 'number';
+      })
+    );
 
     let steps = _.flatten([zero, tasks]);
 
@@ -146,3 +159,5 @@ WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
     });
   };
 };
+
+module.exports = GraphQLEngine;
