@@ -67,10 +67,12 @@ WSEngine.prototype.step = function (requestSpec, ee) {
     }
 
     let payload = template(requestSpec.send, context);
-    if (typeof payload === 'object') {
-      payload = JSON.stringify(payload);
-    } else {
-      payload = payload.toString();
+
+    if (payload) {
+      payload =
+        typeof payload === 'object'
+          ? JSON.stringify(payload)
+          : payload.toString();
     }
 
     debug('WS send: %s', payload);
@@ -115,9 +117,7 @@ WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
         initialContext.ws = ws;
         return callback(null, initialContext);
       });
-      //  ws.on('message', function(msg) {
-      //    console.log('RECEIVED MSG!', msg)
-      //  })
+
       ws.once('error', function (err) {
         debug(err);
         ee.emit('error', err.code);
