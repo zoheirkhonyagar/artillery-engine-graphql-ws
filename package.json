@@ -1,6 +1,6 @@
 {
   "name": "artillery-engine-graphql",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "an artillery engine to run graphql subscriptions",
   "main": "index.js",
   "scripts": {
