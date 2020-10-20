@@ -7,7 +7,7 @@
 const async = require('async');
 const _ = require('lodash');
 const WebSocket = require('ws');
-const debug = require('debug')('engine:artillery-engine-gql');
+const debug = require('debug')('engine:ws');
 const engineUtil = require('artillery/core/lib/engine_util');
 const template = engineUtil.template;
 
@@ -15,7 +15,9 @@ function GraphQLEngine(script, ee, helpers) {
   this.script = script;
   this.ee = ee;
   this.helpers = helpers;
-
+  console.log(script);
+  console.log(ee);
+  console.log(helpers);
   return this;
 }
 
@@ -30,6 +32,8 @@ GraphQLEngine.prototype.createScenario = function (scenarioSpec, ee) {
     }
     return self.step(rs, ee);
   });
+
+  console.log(tasks);
 
   return self.compile(tasks, scenarioSpec.flow, ee);
 };
@@ -74,11 +78,12 @@ GraphQLEngine.prototype.step = function (requestSpec, ee) {
     } else {
       payload = payload.toString();
     }
-
+    console.log('WS send: %s', payload);
     debug('WS send: %s', payload);
 
     context.ws.send(payload, function (err) {
       if (err) {
+        console.log(err);
         debug(err);
         ee.emit('error', err);
       } else {
@@ -123,6 +128,7 @@ GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
       //  })
       ws.once('error', function (err) {
         debug(err);
+        console.log(err);
         ee.emit('error', err.code);
         return callback(err, {});
       });
@@ -139,6 +145,7 @@ GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
 
     async.waterfall(steps, function scenarioWaterfallCb(err, context) {
       if (err) {
+        console.log(err);
         debug(err);
       }
 
