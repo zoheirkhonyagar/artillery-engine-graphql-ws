@@ -7,15 +7,19 @@
 const async = require('async');
 const _ = require('lodash');
 const WebSocket = require('ws');
-const debug = require('debug')('ws');
+const debug = require('debug')('engine:artillery-engine-gql');
 const engineUtil = require('artillery/core/lib/engine_util');
 const template = engineUtil.template;
 
-function WSEngine(script) {
-  this.config = script.config;
+function GraphQLEngine(script, ee, helpers) {
+  this.script = script;
+  this.ee = ee;
+  this.helpers = helpers;
+
+  return this;
 }
 
-WSEngine.prototype.createScenario = function (scenarioSpec, ee) {
+GraphQLEngine.prototype.createScenario = function (scenarioSpec, ee) {
   var self = this;
   let tasks = _.map(scenarioSpec.flow, function (rs) {
     if (rs.think) {
@@ -30,7 +34,7 @@ WSEngine.prototype.createScenario = function (scenarioSpec, ee) {
   return self.compile(tasks, scenarioSpec.flow, ee);
 };
 
-WSEngine.prototype.step = function (requestSpec, ee) {
+GraphQLEngine.prototype.step = function (requestSpec, ee) {
   let self = this;
 
   if (requestSpec.loop) {
@@ -89,7 +93,7 @@ WSEngine.prototype.step = function (requestSpec, ee) {
   return f;
 };
 
-WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
+GraphQLEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
   let config = this.config;
 
   return function scenario(initialContext, callback) {
@@ -100,6 +104,7 @@ WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
       ee.emit('started');
 
       let ws = new WebSocket(config.target, 'graphql-ws');
+
       ws.on('open', function () {
         const message = {
           type: 'connection_init',
@@ -146,4 +151,4 @@ WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
   };
 };
 
-module.exports = WSEngine;
+module.exports = GraphQLEngine;
