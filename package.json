@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/zoheirkhonyagar/artillery-engine-graphql#readme",
   "dependencies": {
-    "artillery": "^1.6.1",
+    "artillery-core": "^4.8.1",
     "async": "^3.2.0",
     "debug": "^4.2.0",
     "loadash": "^1.0.0",
