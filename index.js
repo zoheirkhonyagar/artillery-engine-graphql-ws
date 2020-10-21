@@ -81,12 +81,12 @@ WSEngine.prototype.step = function (requestSpec, ee) {
       if (err) {
         debug(err);
         ee.emit('error', err);
+        return callback(err, context);
       } else {
         let endedAt = process.hrtime(startedAt);
         let delta = endedAt[0] * 1e9 + endedAt[1];
         ee.emit('response', delta, 0, context._uid);
       }
-      return callback(err, context);
     });
   };
 
@@ -132,12 +132,7 @@ WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
       })
     );
 
-    let steps = _.flatten([
-      function z(cb) {
-        return zero(cb, initialContext);
-      },
-      tasks,
-    ]);
+    let steps = _.flatten([zero, tasks]);
 
     async.waterfall(steps, function scenarioWaterfallCb(err, context) {
       if (err) {
