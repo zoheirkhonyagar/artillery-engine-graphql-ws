@@ -132,7 +132,12 @@ WSEngine.prototype.compile = function (tasks, scenarioSpec, ee) {
       })
     );
 
-    let steps = _.flatten([zero, tasks]);
+    let steps = _.flatten([
+      function z(cb) {
+        return zero(cb, initialContext);
+      },
+      tasks,
+    ]);
 
     async.waterfall(steps, function scenarioWaterfallCb(err, context) {
       if (err) {
